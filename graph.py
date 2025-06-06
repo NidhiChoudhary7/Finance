@@ -132,17 +132,24 @@ class FinLifeNavigator:
     def _coordinator_node(self, state: AgentState) -> AgentState:
         """Coordinates results from multiple agents"""
         intermediate_results = state.get("intermediate_results", [])
-        
+
+        # Example of running an additional agent when multiple agents are needed
+        if state.get("context", {}).get("requires_multiple_agents") and state.get(
+            "query_type"
+        ) == "life_event" and len(intermediate_results) == 1:
+            # Invoke budget optimizer as a secondary step
+            result = self.budget_optimizer.process(state)
+            intermediate_results.append(result)
+
         if len(intermediate_results) == 1:
-            # Single agent result
             final_result = intermediate_results[0].get("result", "")
         else:
-            # Multiple agent results - combine intelligently
             final_result = self._combine_results(intermediate_results)
-        
+
         return {
             **state,
-            "final_result": final_result
+            "intermediate_results": intermediate_results,
+            "final_result": final_result,
         }
     
     def _explainer_node(self, state: AgentState) -> AgentState:
@@ -158,8 +165,13 @@ class FinLifeNavigator:
         query_type = state.get("query_type", "general")
         context = state.get("context", {})
         
-        # Check if multiple agents are needed
+        # Check if multiple agents are needed. In this toy example we simply
+        # start with one agent and let the coordinator trigger others.
         if context.get("requires_multiple_agents"):
+            if query_type == "life_event":
+                return "life_event_agent"
+            if query_type == "budget_optimization":
+                return "budget_optimizer_agent"
             return "coordinator"
         
         # Route to specific agent

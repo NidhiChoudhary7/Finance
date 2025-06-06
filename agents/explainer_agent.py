@@ -1,12 +1,23 @@
+"""Converts technical results into simple language."""
+
 from typing import Dict, Any
 
+
 class ExplainerAgent:
+    """Provides user-friendly explanations of agent results."""
+
     def process(self, state: Dict[str, Any]) -> Dict[str, Any]:
-        # (Your “convert technical output into explanation” logic here.)
+        final_result = state.get("final_result", "")
+
+        if final_result:
+            explanation = (
+                "In short, " + final_result.replace("Simulated", "we simulated")
+            )
+        else:
+            explanation = "Unable to generate an explanation."
+
         return {
-            # Note: graph.py’s _explainer_node expects a key called "explanation",
-            # so make sure to return that if you want the final_result overwritten.
-            "explanation": "Here is a user-friendly explanation of the results.",
+            "explanation": explanation,
             "confidence_score": 0.80,
-            "metadata": {}
+            "metadata": {},
         }

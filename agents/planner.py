@@ -62,7 +62,8 @@ class PlannerAgent:
         context = {"requires_multiple_agents": False}
         
         # Check for monetary amounts
-        money_pattern = r'\$?(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)'
+        # Updated regex to capture values like "$5000" by allowing more digits
+        money_pattern = r'\$?(\d+(?:,\d{3})*(?:\.\d{2})?)'
         money_matches = re.findall(money_pattern, user_input)
         if money_matches:
             context["amount"] = money_matches[0].replace(",", "")
