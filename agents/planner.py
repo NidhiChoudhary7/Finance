@@ -74,12 +74,18 @@ class PlannerAgent:
         if time_matches:
             context["timeframe"] = time_matches[0]
         
+
         # Determine if multiple agents might be needed
-        if len([qt for qt in self.query_patterns.keys() 
-                if any(re.search(p, user_input, re.IGNORECASE) 
+        if len([qt for qt in self.query_patterns.keys()
+                if any(re.search(p, user_input, re.IGNORECASE)
                       for p in self.query_patterns[qt])]) > 1:
             context["requires_multiple_agents"] = True
-        
+
+        # Check if user confirmed executing an investment action
+        confirm_keywords = ["invest now", "execute", "confirm", "do it", "deposit"]
+        if any(kw in user_input for kw in confirm_keywords):
+            context["execute_plaid"] = True
+
         return context
     
     def _needs_explanation(self, user_input: str) -> bool:
