@@ -7,18 +7,18 @@ def run_finlife_navigator():
     print("=" * 50)
 
     test_scenarios = [
-        {
-            "input": "I'm planning a vacation next month and received a $5000 bonus. How should I allocate this?",
-            "description": "Multi-agent scenario (Life Event + Budget Optimization)"
-        },
-        {
-            "input": "Explain how my portfolio performed this quarter in simple terms",
-            "description": "Investment analysis with explanation required"
-        },
-        {
-            "input": "What if I quit my job for 6 months to start a business?",
-            "description": "Simulation scenario"
-        },
+        # {
+        #     "input": "I'm planning a vacation next month and received a $5000 bonus. How should I allocate this?",
+        #     "description": "Multi-agent scenario (Life Event + Budget Optimization)"
+        # },
+        # {
+        #     "input": "Explain how my portfolio performed this quarter in simple terms",
+        #     "description": "Investment analysis with explanation required"
+        # },
+        # {
+        #     "input": "What if I quit my job for 6 months to start a business?",
+        #     "description": "Simulation scenario"
+        # },
         {
             "input": "I got married and want to optimize our combined finances",
             "description": "Life event with budget optimization"
