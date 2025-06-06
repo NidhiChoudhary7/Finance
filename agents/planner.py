@@ -2,6 +2,9 @@
 from typing import Dict, Any, List
 import re
 
+from dotenv import load_dotenv
+load_dotenv(override=True)
+
 class PlannerAgent:
     def __init__(self):
         self.query_patterns = {
@@ -110,3 +113,18 @@ class PlannerAgent:
             params["scenario_type"] = "market_downturn"
         
         return params
+
+# state = {
+#     "input": "I got a $5,000 bonus and want to optimize my budget for the next 6 months. Can you explain it in simple terms?"
+# }
+# O/P:
+# {
+#   "query_type": "budget_optimization",
+#   "context": {
+#     "requires_multiple_agents": false,
+#     "amount": "5000",
+#     "timeframe": ["6", "month"]
+#   },
+#   "requires_explanation": true,
+#   "simulation_params": null
+# }
