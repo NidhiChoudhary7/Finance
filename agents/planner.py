@@ -76,7 +76,39 @@ class PlannerAgent:
         time_matches = re.findall(time_pattern, user_input, re.IGNORECASE)
         if time_matches:
             context["timeframe"] = time_matches[0]
-        
+
+        # Risk tolerance
+        if re.search(r"low risk|conservative|cautious", user_input, re.IGNORECASE):
+            context["risk_tolerance"] = "low"
+        elif re.search(r"medium risk|moderate", user_input, re.IGNORECASE):
+            context["risk_tolerance"] = "medium"
+        elif re.search(r"high risk|aggressive", user_input, re.IGNORECASE):
+            context["risk_tolerance"] = "high"
+
+        # Investment goals
+        if re.search(r"retire|retirement", user_input, re.IGNORECASE):
+            context["goal"] = "retirement"
+        elif re.search(r"house|home|down payment", user_input, re.IGNORECASE):
+            context["goal"] = "buy_home"
+        elif re.search(r"emergency fund|rainy day|safety net", user_input, re.IGNORECASE):
+            context["goal"] = "emergency_fund"
+
+        # ESG preference
+        if re.search(r"esg|ethical|sustainable|socially responsible|green", user_input, re.IGNORECASE):
+            context["esg"] = True
+
+        if "current holdings" in user_input or "existing portfolio" in user_input:
+            context["include_holdings"] = True
+        if "expenses" in user_input or "bills" in user_input:
+            context["include_expenses"] = True
+
+        override_pattern = r"(rent|utilities|mortgage|subscription)\s*\$?(\d+(?:,\d{3})*(?:\.\d{2})?)"
+        overrides = re.findall(override_pattern, user_input, re.IGNORECASE)
+        if overrides:
+            context["override_fixed_expenses"] = {
+                name.capitalize(): float(value.replace(",", "")) for name, value in overrides
+            }
+
 
         # Determine if multiple agents might be needed
         if len([qt for qt in self.query_patterns.keys()

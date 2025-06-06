@@ -35,6 +35,9 @@ This will run a few sample queries through the FinLife Navigator graph.
 ### Plaid Integration
 
 If `PLAID_CLIENT_ID`, `PLAID_SECRET`, and `ACCESS_TOKEN` are provided, the
-`InvestmentAgent` will fetch your sandbox account balance via Plaid when a
-query explicitly confirms an investment action (e.g. "invest now"). The
-projected balance after allocation is included in the response.
+`InvestmentAgent` can pull real account data via Plaid when the query requests it.
+Set `include_holdings` or `include_expenses` in the context (or mention them in
+the prompt) to fetch investment holdings and summarize recurring expenses. These
+values are used to validate that any suggested allocation is affordable.
+The account balance is still fetched when a user confirms an investment action
+(e.g. "invest now").
