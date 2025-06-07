@@ -38,3 +38,7 @@ If `PLAID_CLIENT_ID`, `PLAID_SECRET`, and `ACCESS_TOKEN` are provided, the
 `InvestmentAgent` will fetch your sandbox account balance via Plaid when a
 query explicitly confirms an investment action (e.g. "invest now"). The
 projected balance after allocation is included in the response.
+
+When `include_holdings` or `include_expenses` is set in the context the agent
+will pull investment positions and recent transactions. Recurring expenses are
+summarized to estimate available cash flow for new contributions.
