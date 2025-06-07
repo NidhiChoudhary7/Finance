@@ -41,3 +41,19 @@ the prompt) to fetch investment holdings and summarize recurring expenses. These
 values are used to validate that any suggested allocation is affordable.
 The account balance is still fetched when a user confirms an investment action
 (e.g. "invest now").
+
+### Context Flags for `InvestmentAgent`
+
+You can influence how the investment agent gathers data and tailors
+recommendations by supplying optional keys in the `context` object or by
+mentioning them in your prompt:
+
+- `risk_tolerance`: `low`, `medium`, or `high` (defaults to `medium`)
+- `timeframe`: a tuple like `["5", "year"]` describing your horizon
+- `goal`: e.g. `retirement`, `buy_home`, or `emergency_fund`
+- `include_holdings`: set to `true` to fetch your existing investments
+- `include_expenses`: set to `true` to analyze recurring expenses
+- `override_fixed_expenses`: dictionary mapping expense names to amounts
+
+These inputs allow the agent to compute an appropriate allocation and ensure it
+fits your actual cash flow.
