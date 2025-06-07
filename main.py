@@ -18,10 +18,15 @@ def run_finlife_navigator():
         # {
         #     "input": "What if I quit my job for 6 months to start a business?",
         #     "description": "Simulation scenario"
+        # # },
+        # {
+        #     "input": "I got married and want to optimize our combined finances",
+        #     "description": "Life event with budget optimization"
         # },
         {
-            "input": "I got married and want to optimize our combined finances",
-            "description": "Life event with budget optimization"
+            "input": "I just received a $10,000 inheritance. How should I do investment for long-term growth?",
+            "description": "Windfall event with investment planning"
+
         }
     ]
 
