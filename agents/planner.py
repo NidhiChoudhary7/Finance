@@ -97,6 +97,21 @@ class PlannerAgent:
         if re.search(r"esg|ethical|sustainable|socially responsible|green", user_input, re.IGNORECASE):
             context["esg"] = True
 
+        # Include holdings or expenses based on keywords
+        if re.search(r"holdings|portfolio|existing investments", user_input, re.IGNORECASE):
+            context["include_holdings"] = True
+        if re.search(r"expenses|recurring bills|fixed costs", user_input, re.IGNORECASE):
+            context["include_expenses"] = True
+
+        # Simple overrides for common expenses
+        overrides = {}
+        for name in ["rent", "utilities"]:
+            match = re.search(fr"{name}\s*\$?(\d+(?:,\d{3})*(?:\.\d+)?)", user_input, re.IGNORECASE)
+            if match:
+                overrides[name.capitalize()] = float(match.group(1).replace(",", ""))
+        if overrides:
+            context["override_fixed_expenses"] = overrides
+
 
         # Determine if multiple agents might be needed
         if len([qt for qt in self.query_patterns.keys()
