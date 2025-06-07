@@ -45,3 +45,27 @@ def derive_monthly_income(transactions: Optional[List[Dict[str, Any]]]) -> float
     if not monthly:
         return 0.0
     return sum(monthly.values()) / len(monthly)
+
+
+def detect_recent_bonus(transactions: Optional[List[Dict[str, Any]]]) -> Optional[Dict[str, Any]]:
+    """Return info about a recent bonus deposit if detected."""
+    if not transactions:
+        return None
+
+    sorted_txs = sorted(
+        transactions,
+        key=lambda tx: tx.get("date", ""),
+        reverse=True,
+    )
+    for tx in sorted_txs:
+        amount = tx.get("amount", 0)
+        if amount and amount >= 5000 and tx.get("name"):
+            name_lower = str(tx.get("name", "")).lower()
+            categories = [c.lower() for c in (tx.get("category") or [])]
+            if "bonus" in name_lower or "bonus" in categories:
+                return {
+                    "amount": amount,
+                    "date": tx.get("date"),
+                    "name": tx.get("name"),
+                }
+    return None

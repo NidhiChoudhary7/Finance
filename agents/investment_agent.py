@@ -14,7 +14,11 @@ from .plaid_service import (
     fetch_investment_holdings,
     fetch_recent_transactions,
 )
-from .finance_utils import summarize_recurring_expenses, derive_monthly_income
+from .finance_utils import (
+    summarize_recurring_expenses,
+    derive_monthly_income,
+    detect_recent_bonus,
+)
 
 
 class InvestmentAgent:
@@ -44,6 +48,7 @@ class InvestmentAgent:
             transactions = fetch_recent_transactions(
                 access_token, start_date.isoformat(), end_date.isoformat()
             ) or []
+        bonus_info = detect_recent_bonus(transactions)
         fixed_expenses = summarize_recurring_expenses(transactions)
         fixed_expenses.update(override_expenses)
         monthly_income = derive_monthly_income(transactions)
@@ -55,6 +60,16 @@ class InvestmentAgent:
             amount = float(amount_str) if amount_str else None
         except ValueError:
             amount = None
+
+        clarifying = []
+        if not goal:
+            clarifying.append(
+                "What is your primary financial goal with this bonus (e.g., long-term growth, emergency savings)?"
+            )
+        if not timeframe:
+            clarifying.append("What is your expected investment timeline?")
+        if "risk_tolerance" not in context:
+            clarifying.append("What level of investment risk are you comfortable with (low, medium, high)?")
 
         # Determine time horizon in years if provided
         horizon = None
@@ -92,6 +107,14 @@ class InvestmentAgent:
         stock_deficit = max(0.0, stock_pct - current_stock_pct) * total_portfolio_value
         bond_deficit = max(0.0, bond_pct - current_bond_pct) * total_portfolio_value
 
+        prefix = ""
+        if bonus_info:
+            prefix += (
+                f"I noticed a recent bonus deposit of ${bonus_info['amount']:.2f} on {bonus_info['date']}. "
+            )
+        if clarifying:
+            prefix += " ".join(clarifying) + " "
+
         if amount is not None:
             stocks = amount * stock_pct
             bonds = amount * bond_pct
@@ -101,6 +124,7 @@ class InvestmentAgent:
                 f"Invest ${stocks:.2f} in stocks, ${bonds:.2f} in bonds, and "
                 f"keep ${cash:.2f} in cash or equivalents."
             )
+            base = prefix + base
 
             if execute_plaid and starting_balance is not None:
                 projected = starting_balance + amount
@@ -140,6 +164,7 @@ class InvestmentAgent:
                 f"Each month invest ${stocks:.2f} in stocks, ${bonds:.2f} in bonds, "
                 f"and keep ${cash:.2f} in cash from your available funds."
             )
+            base = prefix + base
             if current_holdings:
                 base += (
                     f" Your portfolio is currently {current_stock_pct*100:.0f}% stocks, "
@@ -158,6 +183,7 @@ class InvestmentAgent:
                 f"Allocate {stock_pct*100:.0f}% stocks, {bond_pct*100:.0f}% bonds"
                 f" and {cash_pct*100:.0f}% cash for a diversified portfolio."
             )
+            base = prefix + base
             result = generate_response(base)
 
         metadata = {
@@ -175,6 +201,8 @@ class InvestmentAgent:
         }
         if starting_balance is not None:
             metadata["starting_balance"] = starting_balance
+        if bonus_info:
+            metadata["bonus_info"] = bonus_info
 
         return {
             "result": result,
