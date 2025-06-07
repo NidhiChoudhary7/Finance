@@ -32,6 +32,17 @@ python main.py
 
 This will run a few sample queries through the FinLife Navigator graph.
 
+### Interactive CLI
+
+To try a quick interactive session with a basic user profile, run:
+
+```bash
+python cli.py
+```
+
+The script collects a few onboarding details (risk tolerance, goal, time
+horizon) and then lets you type questions until you enter `exit`.
+
 ### Plaid Integration
 
 If `PLAID_CLIENT_ID`, `PLAID_SECRET`, and `ACCESS_TOKEN` are provided, the

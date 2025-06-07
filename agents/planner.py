@@ -29,12 +29,16 @@ class PlannerAgent:
     def process(self, state: Dict[str, Any]) -> Dict[str, Any]:
         """Analyzes query and determines routing strategy"""
         user_input = state.get("input", "").lower()
-        
+
         # Determine query type
         query_type = self._classify_query(user_input)
-        
-        # Extract context and parameters
+
+        # Extract context and parameters from the input
         context = self._extract_context(user_input, query_type)
+
+        # Merge any pre-existing context from the state (e.g. user profile)
+        existing_context = state.get("context", {}) or {}
+        context = {**existing_context, **context}
         
         # Determine if explanation is needed
         requires_explanation = self._needs_explanation(user_input)
