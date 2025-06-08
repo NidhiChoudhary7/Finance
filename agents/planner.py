@@ -29,43 +29,26 @@ class PlannerAgent:
     
     def process(self, state: Dict[str, Any]) -> Dict[str, Any]:
         """Analyzes query and determines routing strategy"""
-        user_input = state.get("input", "")
+        user_input = state.get("input", "").lower()
+
+        # Determine query type
+        query_type = self._classify_query(user_input)
+
+        # Extract context and parameters from the input
+        context = self._extract_context(user_input, query_type)
+
+        # Merge any pre-existing context from the state (e.g. user profile)
         existing_context = state.get("context", {}) or {}
-
-        prompt = (
-            "You are a financial assistant. Analyse the following user request "
-            "and return a JSON object with keys: query_type (life_event, "
-            "budget_optimization, investment_analysis, simulation, general), "
-            "context (dictionary of any amounts, timeframe as [number, unit], "
-            "risk_tolerance, goal, esg flag, include_holdings, include_expenses, "
-            "execute_plaid, override_fixed_expenses), requires_explanation "
-            "(true/false), and simulation_params (include scenario_type if the "
-            "request implies a scenario). Only output valid JSON.\nRequest: "
-            f"{user_input}"
-        )
-
-        data = generate_json(prompt)
-        if data:
-            ctx = data.get("context", {}) or {}
-            context = {**existing_context, **ctx}
-            return {
-                "query_type": data.get("query_type", "general"),
-                "context": context,
-                "requires_explanation": data.get("requires_explanation", False),
-                "simulation_params": data.get("simulation_params"),
-            }
-
-        # Fallback heuristic behaviour when OpenAI parsing fails
-        user_input_lower = user_input.lower()
-        query_type = self._classify_query(user_input_lower)
-        context = self._extract_context(user_input_lower, query_type)
         context = {**existing_context, **context}
-        requires_explanation = self._needs_explanation(user_input_lower)
-        simulation_params = (
-            self._extract_simulation_params(user_input_lower)
-            if query_type == "simulation"
-            else None
-        )
+        
+        # Determine if explanation is needed
+        requires_explanation = self._needs_explanation(user_input)
+        
+        # Extract simulation parameters if applicable
+        simulation_params = None
+        if query_type == "simulation":
+            simulation_params = self._extract_simulation_params(user_input)
+        
         return {
             "query_type": query_type,
             "context": context,
