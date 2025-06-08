@@ -7,7 +7,7 @@ for existing assets."""
 
 from typing import Dict, Any
 import os
-from .openai_utils import generate_response
+from .openai_utils import generate_response, generate_json
 from datetime import datetime, timedelta
 from .plaid_service import (
     fetch_account_balance,
@@ -64,13 +64,25 @@ class InvestmentAgent:
             except (ValueError, TypeError):
                 horizon = None
 
-        # Dynamic allocation based on risk tolerance and time horizon
-        risk_map = {"low": 0.4, "medium": 0.6, "high": 0.8}
-        risk_score = risk_map.get(risk, 0.6)
-        time_score = min(horizon / 30, 1.0) if horizon else 0.5
-        stock_pct = 0.3 + 0.6 * (0.5 * risk_score + 0.5 * time_score)
-        cash_pct = 0.1 if horizon and horizon < 5 else 0.05
-        bond_pct = max(0.0, 1.0 - stock_pct - cash_pct)
+        allocation_prompt = (
+            "Suggest portfolio allocation percentages for stocks, bonds and "
+            "cash given a risk tolerance of "
+            f"{risk} and an investment horizon of {horizon or 'unknown'} years."
+            " Respond only with JSON: {\"stocks\": int, \"bonds\": int, \"cash\": int}"
+        )
+        alloc = generate_json(allocation_prompt, max_tokens=60)
+        if alloc:
+            stock_pct = alloc.get("stocks", 60) / 100
+            bond_pct = alloc.get("bonds", 30) / 100
+            cash_pct = alloc.get("cash", 10) / 100
+        else:
+            # fallback heuristic
+            risk_map = {"low": 0.4, "medium": 0.6, "high": 0.8}
+            risk_score = risk_map.get(risk, 0.6)
+            time_score = min(horizon / 30, 1.0) if horizon else 0.5
+            stock_pct = 0.3 + 0.6 * (0.5 * risk_score + 0.5 * time_score)
+            cash_pct = 0.1 if horizon and horizon < 5 else 0.05
+            bond_pct = max(0.0, 1.0 - stock_pct - cash_pct)
 
         # Compute portfolio context if holdings are available
         total_portfolio_value = (
@@ -89,76 +101,57 @@ class InvestmentAgent:
         current_bond_pct = current_bond_value / total_portfolio_value if total_portfolio_value else 0
         current_cash_pct = current_cash_value / total_portfolio_value if total_portfolio_value else 0
 
-        stock_deficit = max(0.0, stock_pct - current_stock_pct) * total_portfolio_value
-        bond_deficit = max(0.0, bond_pct - current_bond_pct) * total_portfolio_value
 
         if amount is not None:
             stocks = amount * stock_pct
             bonds = amount * bond_pct
             cash = amount * cash_pct
-
-            base = (
-                f"Invest ${stocks:.2f} in stocks, ${bonds:.2f} in bonds, and "
-                f"keep ${cash:.2f} in cash or equivalents."
+            info = {
+                "invest_amount": amount,
+                "stocks": stocks,
+                "bonds": bonds,
+                "cash": cash,
+                "balance": starting_balance,
+                "goal": goal,
+                "esg": esg,
+            }
+            prompt = (
+                "You are an investment advisor. Using the following context, "
+                "provide a concise recommendation in two sentences:\n" f"{info}"
             )
-
-            if execute_plaid and starting_balance is not None:
-                projected = starting_balance + amount
-                base += f" Your new balance could be around ${projected:.2f}."
-
-            # Simple growth projections
-            projections = {}
-            for yrs in [5, 10, 20]:
-                total = (
-                    stocks * ((1 + 0.07) ** yrs)
-                    + bonds * ((1 + 0.03) ** yrs)
-                    + cash * ((1 + 0.02) ** yrs)
-                )
-                if starting_balance is not None:
-                    total += starting_balance
-                projections[yrs] = total
-
-            proj_str = ", ".join(
-                [f"${projections[y]:.2f} in {y}y" for y in [5, 10, 20]]
-            )
-            base += f" Potential growth: {proj_str}."
-
-            if esg:
-                base += " ESG preferences noted."
-
-            if goal:
-                base = f"Goal: {goal}. " + base
-
-            result = generate_response(
-                f"Provide a short investment suggestion based on: {base}"
-            )
+            result = generate_response(prompt, max_tokens=120)
         elif available_for_investment is not None:
             stocks = available_for_investment * stock_pct
             bonds = available_for_investment * bond_pct
             cash = available_for_investment * cash_pct
-            base = (
-                f"Each month invest ${stocks:.2f} in stocks, ${bonds:.2f} in bonds, "
-                f"and keep ${cash:.2f} in cash from your available funds."
+            info = {
+                "monthly_available": available_for_investment,
+                "stocks": stocks,
+                "bonds": bonds,
+                "cash": cash,
+                "current_allocation": {
+                    "stocks": current_stock_pct,
+                    "bonds": current_bond_pct,
+                    "cash": current_cash_pct,
+                },
+            }
+            prompt = (
+                "Advise the user on monthly investment contributions. "
+                "Respond in two sentences:\n" f"{info}"
             )
-            if current_holdings:
-                base += (
-                    f" Your portfolio is currently {current_stock_pct*100:.0f}% stocks, "
-                    f"{current_bond_pct*100:.0f}% bonds, {current_cash_pct*100:.0f}% cash."
-                )
-                base += (
-                    f" To reach the target {stock_pct*100:.0f}/{bond_pct*100:.0f}/{cash_pct*100:.0f}, "
-                    f"direct new contributions toward ${stock_deficit:.2f} in stocks "
-                    f"and ${bond_deficit:.2f} in bonds."
-                )
-            result = generate_response(
-                f"Provide a short investment suggestion based on: {base}"
-            )
+            result = generate_response(prompt, max_tokens=120)
         else:
-            base = (
-                f"Allocate {stock_pct*100:.0f}% stocks, {bond_pct*100:.0f}% bonds"
-                f" and {cash_pct*100:.0f}% cash for a diversified portfolio."
+            info = {
+                "target_allocation": {
+                    "stocks": stock_pct,
+                    "bonds": bond_pct,
+                    "cash": cash_pct,
+                }
+            }
+            prompt = (
+                "Suggest a generic investment allocation in one sentence:\n" f"{info}"
             )
-            result = generate_response(base)
+            result = generate_response(prompt, max_tokens=80)
 
         metadata = {
             "amount": amount,

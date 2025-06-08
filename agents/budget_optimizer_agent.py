@@ -9,32 +9,18 @@ class BudgetOptimizerAgent:
 
     def process(self, state: Dict[str, Any]) -> Dict[str, Any]:
         context = state.get("context", {}) or {}
-        amount_str = context.get("amount")
+        amount = context.get("amount")
 
-        try:
-            amount = float(amount_str) if amount_str else None
-        except ValueError:
-            amount = None
-
-        if amount is not None:
-            savings = amount * 0.5
-            investing = amount * 0.3
-            fun = amount - savings - investing
-            base = (
-                f"Allocate ${savings:.2f} to savings, ${investing:.2f} to investments, "
-                f"and ${fun:.2f} for discretionary spending."
-            )
-            result = generate_response(
-                f"Suggest a short budgeting tip based on: {base}"
-            )
-        else:
-            base = (
-                "Optimize by allocating 50% to savings, 30% to investments and 20% to discretionary spending."
-            )
-            result = generate_response(base)
+        prompt = (
+            "You are a budgeting expert. Provide a short recommendation for how "
+            "to allocate a user's disposable income. Include specific dollar "
+            "amounts if provided. Limit to two sentences.\nContext: "
+            f"{context}"
+        )
+        result = generate_response(prompt, max_tokens=80)
 
         return {
             "result": result,
             "confidence_score": 0.82,
-            "metadata": {"amount": amount},
+            "metadata": {"context": context},
         }

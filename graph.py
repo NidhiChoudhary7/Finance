@@ -1,6 +1,7 @@
 # graph.py
 from langgraph.graph import StateGraph, START, END
 from typing import TypedDict, List, Optional, Any
+from agents.openai_utils import summarize_results
 from agents.planner import PlannerAgent
 from agents.LifeEventAgent import LifeEventAgent
 from agents.budget_optimizer_agent import BudgetOptimizerAgent
@@ -192,12 +193,12 @@ class FinLifeNavigator:
     
     def _combine_results(self, results: List[dict]) -> str:
         """Intelligently combines results from multiple agents"""
-        combined = []
-        for result in results:
-            if result.get("result"):
-                combined.append(result["result"])
-        
-        return " | ".join(combined) if combined else "No results available"
+        texts = [r.get("result") for r in results if r.get("result")]
+        if not texts:
+            return "No results available"
+        if len(texts) == 1:
+            return texts[0]
+        return summarize_results(texts)
 
 # Create global instance
 navigator = FinLifeNavigator()

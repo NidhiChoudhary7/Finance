@@ -1,6 +1,7 @@
 """Simple scenario simulation logic."""
 
 from typing import Dict, Any
+from .openai_utils import generate_response
 
 
 class SimulationAgent:
@@ -13,17 +14,12 @@ class SimulationAgent:
 
         scenario = params.get("scenario_type", "generic")
 
-        if scenario == "job_loss":
-            desc = "Simulated six months of income loss"
-        elif scenario == "emergency":
-            desc = "Simulated emergency expense impact"
-        elif scenario == "market_downturn":
-            desc = "Simulated market downturn effect on portfolio"
-        else:
-            desc = "Simulated generic scenario"
-
-        if timeframe:
-            desc += f" over {timeframe[0]} {timeframe[1]}s"
+        prompt = (
+            "Briefly describe the financial impact of a "
+            f"{scenario} scenario. If a timeframe is provided include it.\n"
+            f"Timeframe: {timeframe}"
+        )
+        desc = generate_response(prompt, max_tokens=80)
 
         return {
             "result": desc,
