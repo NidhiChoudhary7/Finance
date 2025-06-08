@@ -1,6 +1,7 @@
 # agents/planner.py
 from typing import Dict, Any, List
 import re
+from .openai_utils import generate_json
 
 from dotenv import load_dotenv
 load_dotenv(override=True)
@@ -52,7 +53,7 @@ class PlannerAgent:
             "query_type": query_type,
             "context": context,
             "requires_explanation": requires_explanation,
-            "simulation_params": simulation_params
+            "simulation_params": simulation_params,
         }
     
     def _classify_query(self, user_input: str) -> str:

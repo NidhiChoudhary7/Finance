@@ -1,6 +1,7 @@
 """Converts technical results into simple language."""
 
 from typing import Dict, Any
+from .openai_utils import generate_response
 
 
 class ExplainerAgent:
@@ -10,9 +11,11 @@ class ExplainerAgent:
         final_result = state.get("final_result", "")
 
         if final_result:
-            explanation = (
-                "In short, " + final_result.replace("Simulated", "we simulated")
+            prompt = (
+                "Explain the following in very simple language in one sentence:\n"
+                f"{final_result}"
             )
+            explanation = generate_response(prompt, max_tokens=60)
         else:
             explanation = "Unable to generate an explanation."
 

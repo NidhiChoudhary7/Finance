@@ -1,40 +1,29 @@
 """Simple logic for handling major life events."""
 
 from typing import Dict, Any
+from .openai_utils import generate_response
 
 
 class LifeEventAgent:
     """Processes life events found in the user input."""
 
-    LIFE_EVENTS = [
-        "vacation",
-        "wedding",
-        "baby",
-        "house",
-        "car",
-        "moving",
-        "retirement",
-    ]
-
     def process(self, state: Dict[str, Any]) -> Dict[str, Any]:
         """Return a short plan for the detected life event."""
 
-        user_input = state.get("input", "").lower()
+        user_input = state.get("input", "")
         context = state.get("context", {}) or {}
-        amount = context.get("amount")
 
-        event = next((e for e in self.LIFE_EVENTS if e in user_input), None)
-
-        if event:
-            base = f"Plan created for upcoming {event}."
-        else:
-            base = "General life event plan created."
-
-        if amount:
-            base += f" Estimated budget: ${amount}."
+        prompt = (
+            "You are a helpful financial assistant. Provide a concise plan or "
+            "set of tips for the following user request. If a specific life "
+            "event is mentioned, tailor the advice accordingly. Limit the "
+            "response to no more than three sentences.\nRequest: "
+            f"{user_input}\nContext: {context}"
+        )
+        result = generate_response(prompt, max_tokens=100)
 
         return {
-            "result": base,
-            "confidence_score": 0.85 if event else 0.6,
-            "metadata": {"event": event, "amount": amount},
+            "result": result,
+            "confidence_score": 0.85,
+            "metadata": {"context": context},
         }
