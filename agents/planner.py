@@ -1,8 +1,7 @@
 # agents/planner.py
 from typing import Dict, Any, List
 import re
-import json
-from .openai_utils import generate_json, generate_response
+from .openai_utils import generate_json
 
 from dotenv import load_dotenv
 load_dotenv(override=True)
